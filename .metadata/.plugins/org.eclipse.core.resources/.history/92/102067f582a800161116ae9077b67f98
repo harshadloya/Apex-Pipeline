@@ -1,0 +1,11 @@
+package edu.bing.loader;
+
+public class InstructionLoader 
+{
+	private String filename;
+	
+	public InstructionLoader(String filename)
+	{
+		
+	}
+}

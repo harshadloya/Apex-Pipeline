@@ -1,0 +1,49 @@
+package edu.bing.beans;
+
+public class Instruction {
+
+	String instr_type;
+	String src1;
+	String src2;
+	String dest;
+	String literal;
+	
+	public String getInstr_type() {
+		return instr_type;
+	}
+	public void setInstr_type(String instr_type) {
+		this.instr_type = instr_type;
+	}
+	public int getSrc1() {
+		return src1;
+	}
+	public void setSrc1(int src1) {
+		this.src1 = src1;
+	}
+	public int getSrc2() {
+		return src2;
+	}
+	public void setSrc2(int src2) {
+		this.src2 = src2;
+	}
+	public int getDest() {
+		return dest;
+	}
+	public void setDest(int dest) {
+		this.dest = dest;
+	}
+	public int getLiteral() {
+		return literal;
+	}
+	public void setLiteral(int literal) {
+		this.literal = literal;
+	}
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return super.toString();
+	}
+	
+	
+	
+}
