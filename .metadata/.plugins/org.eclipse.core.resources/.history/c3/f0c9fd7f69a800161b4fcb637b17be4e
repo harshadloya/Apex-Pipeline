@@ -1,0 +1,65 @@
+package edu.bing.simulator;
+
+import java.util.Scanner;
+
+public class Apex {
+
+	Apex()
+	{
+		
+	}
+	
+	void operations()
+	{
+		System.out.println("Enter the Number of Cycles for Simulation");
+		Scanner sc = new Scanner(System.in);
+		int number = sc.nextInt();
+	}
+	
+	void initialize()
+	{
+	 	
+	}
+	
+	void simulate()
+	{
+		
+	}
+	
+	void display()
+	{
+		
+	}
+	
+	void wbStage()
+	{
+		
+	}
+	
+	void memStage()
+	{
+		
+	}
+	
+	void exStage()
+	{
+		
+	}
+	
+	void decodeStage()
+	{
+		
+	}
+	
+	void fetchStage()
+	{
+		
+	}
+	
+	public static void main(String[] args) 
+	{
+		Apex ap = new Apex();
+		ap.operations();
+	}
+
+}

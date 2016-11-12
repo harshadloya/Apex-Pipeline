@@ -1,0 +1,61 @@
+package edu.bing.simulator;
+
+public class Apex {
+
+	Apex()
+	{
+		
+	}
+	
+	void operations()
+	{
+		
+	}
+	
+	void initialize()
+	{
+		
+	}
+	
+	void simulate()
+	{
+		
+	}
+	
+	void display()
+	{
+		
+	}
+	
+	void wbStage()
+	{
+		
+	}
+	
+	void memStage()
+	{
+		
+	}
+	
+	void exStage()
+	{
+		
+	}
+	
+	void decodeStage()
+	{
+		
+	}
+	
+	void fetchStage()
+	{
+		
+	}
+	
+	public static void main(String[] args) 
+	{
+		Apex ap = new Apex();
+		ap.operations();
+	}
+
+}
