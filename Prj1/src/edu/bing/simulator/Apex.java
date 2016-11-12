@@ -2,8 +2,11 @@ package edu.bing.simulator;
 
 import java.util.Scanner;
 
+
 public class Apex {
 
+	boolean initialized = false; 
+	
 	Scanner sc = new Scanner(System.in);
 
 	Apex()
@@ -37,16 +40,23 @@ public class Apex {
 
 	void initialize()
 	{
-
+		initialized = true;
+		System.out.println("Initialized...");
 	}
 
 	void simulate()
 	{
+		if(!initialized){
+			System.out.println("Please initialize the simulator.");
+		}
+		else
+		{
 		System.out.println("Enter the Number of Cycles for Simulation");
 		int number = sc.nextInt();
 		for(int i=0; i<number; i++)
 		{
 			wbStage();
+		}
 		}
 	}
 
@@ -57,7 +67,7 @@ public class Apex {
 
 	void wbStage()
 	{
-
+	
 	}
 
 	void memStage()
