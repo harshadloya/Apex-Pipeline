@@ -1,7 +1,9 @@
 package edu.bing.simulator;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 
 import edu.bing.beans.Instruction;
@@ -20,10 +22,11 @@ public class Apex {
 	static ArrayList<Instruction> instructionsToProcess = new ArrayList<Instruction>();
 	boolean mem, ex, decode, fetch;
 	Instruction inFetch, inDecode, inEx1ALU1, inEx1ALU2, inEx2ALU1, inEx2ALU2, inMem, inWb;
+	List<Instruction> pipelineValues = Arrays.asList(new Instruction[6]);
 
 	Apex()
 	{
-
+		
 	}
 
 	void operations()
@@ -70,7 +73,7 @@ public class Apex {
 			ArrayList<Instruction> instructionsToProcess = new ArrayList<Instruction>();
 			instructionsToProcess = (ArrayList<Instruction>) isl.loadInstructions();
 			int i,j=0;
-			for (i=PC_value; i < PC_value+instructionsToProcess.size(); i++){
+			for (i=PC_value; i < PC_value+instructionsToProcess.size(); i=i+4){
 				memory.put(i, instructionsToProcess.get(j));
 				j++;				
 			}
@@ -91,6 +94,8 @@ public class Apex {
 		{
 			mem=false;
 			inWb = inMem;
+			pipelineValues.add(5, inWb);
+			memStage(n);
 		}
 		else
 		{
@@ -104,6 +109,8 @@ public class Apex {
 		{
 			ex = false;
 			inMem = inEx1ALU1;
+			pipelineValues.add(4, inMem);
+			exStage(n);
 		}
 		else
 		{
@@ -117,12 +124,56 @@ public class Apex {
 		if(decode)
 		{
 			decode=false;
-			inEx1ALU1 = inDecode;
+			switch(inDecode.getInstr_type())
+			{
+				case "ADD":
+				case "SUB":
+				case "MUL":
+					exStage1ALU1(n);
+				case "BAL":
+				case "BNZ":
+				case "BZ" :
+					exStage2ALU1(n);
+				case "HALT" :
+					//set some boolean true to kill the main loop
+					break;
+			
+			}
+			decodeStage(n);
 		}
 		else
 		{
 			decodeStage(n);
 		}
+
+	}
+	
+	void exStage1ALU1(int n)
+	{
+			decode=false;
+			inEx1ALU1 = inDecode;
+			pipelineValues.add(2, inEx1ALU1);
+			exStage1ALU2(n);
+
+	}
+	
+	void exStage1ALU2(int n)
+	{
+		inEx1ALU2 = inEx1ALU1;
+		//decodeStage(n);
+	
+	}
+	
+	void exStage2ALU1(int n)
+	{
+		inEx2ALU1 = inDecode;
+		pipelineValues.add(3, inEx2ALU1);
+		exStage2ALU2(n);
+	}
+	
+	void exStage2ALU2(int n)
+	{
+		inEx2ALU2 = inEx2ALU1;
 
 	}
 
@@ -132,7 +183,8 @@ public class Apex {
 		{
 			fetch=false;
 			inDecode = inFetch;
-			
+			pipelineValues.add(1, inDecode);
+			fetchStage(n);
 		}
 		else
 		{
@@ -144,6 +196,7 @@ public class Apex {
 	{
 		fetch=true;
 		inFetch = (Instruction) memory.get(PC_value);
+		pipelineValues.add(0, inFetch);
 		PC_value++;
 	}
 	
