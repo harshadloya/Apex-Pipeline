@@ -2,9 +2,10 @@ package edu.bing.beans;
 
 public class Register {
 
-	String reg_name;
-	int reg_value;
-	int status;
+	private String reg_name;
+	private int reg_value;
+	private int status;
+	
 	public String getReg_name() {
 		return reg_name;
 	}
@@ -22,6 +23,10 @@ public class Register {
 	}
 	public void setStatus(int status) {
 		this.status = status;
+	}
+	@Override
+	public String toString() {
+		return "Register: Register_name = " + reg_name + ", Register_value = " + reg_value + ", Status = " + status;
 	}
 	
 	

@@ -75,6 +75,7 @@ public class InstructionLoader
 				}
 				instructionList.add(instruction);
 				System.out.println(line);
+				br.close();
 			}
 		}
 		catch (FileNotFoundException e) {
@@ -86,6 +87,7 @@ public class InstructionLoader
 			e.printStackTrace();
 			System.exit(0);
 		}
+		
 		return instructionList;
 	}
 

@@ -1,12 +1,12 @@
 package edu.bing.simulator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
 import edu.bing.beans.Instruction;
+import edu.bing.beans.Register;
 import edu.bing.loader.InstructionLoader;
 
 
@@ -22,12 +22,11 @@ public class Apex {
 	static ArrayList<Instruction> instructionsToProcess = new ArrayList<Instruction>();
 	boolean mem, ex, decode, fetch;
 	Instruction inFetch, inDecode, inEx1ALU1, inEx1ALU2, inEx2ALU1, inEx2ALU2, inMem, inWb;
-	List<Instruction> pipelineValues = Arrays.asList(new Instruction[6]);
+	//Commenting as we may not need it
+	//List<Instruction> pipelineValues = new ArrayList<Instruction>();
+	
+	HashMap<String, Register> registerStatus = new HashMap<String, Register>();
 
-	Apex()
-	{
-		
-	}
 
 	void operations()
 	{
@@ -59,6 +58,11 @@ public class Apex {
 		System.out.println("Initialized...");
 		for (int i = 0; i < MEM_LENGTH; i++){
 			memory.put(i, null);
+		}
+		
+		for (int n=0; n<16; n++)
+		{
+			registerStatus.put("R"+n, new Register());
 		}
 	}
 
@@ -94,7 +98,7 @@ public class Apex {
 		{
 			mem=false;
 			inWb = inMem;
-			pipelineValues.add(5, inWb);
+			//pipelineValues.add(5, inWb);
 			memStage(n);
 		}
 		else
@@ -109,7 +113,7 @@ public class Apex {
 		{
 			ex = false;
 			inMem = inEx1ALU1;
-			pipelineValues.add(4, inMem);
+			//pipelineValues.add(4, inMem);
 			exStage(n);
 		}
 		else
@@ -152,7 +156,7 @@ public class Apex {
 	{
 			decode=false;
 			inEx1ALU1 = inDecode;
-			pipelineValues.add(2, inEx1ALU1);
+			//pipelineValues.add(2, inEx1ALU1);
 			exStage1ALU2(n);
 
 	}
@@ -167,7 +171,7 @@ public class Apex {
 	void exStage2ALU1(int n)
 	{
 		inEx2ALU1 = inDecode;
-		pipelineValues.add(3, inEx2ALU1);
+		//pipelineValues.add(3, inEx2ALU1);
 		exStage2ALU2(n);
 	}
 	
@@ -183,7 +187,12 @@ public class Apex {
 		{
 			fetch=false;
 			inDecode = inFetch;
-			pipelineValues.add(1, inDecode);
+			//pipelineValues.add(1, inDecode);
+			
+			//will have to do something like below for each instruction type... need to confirm with nimesh
+			registerStatus.get(inDecode.getSrc1()).setReg_name(inDecode.getSrc1());
+			registerStatus.get(inDecode.getSrc1()).setReg_value(registerStatus.get(inDecode.getSrc1()).getReg_value());
+			registerStatus.get(inDecode.getSrc1()).setStatus(1);
 			fetchStage(n);
 		}
 		else
@@ -196,7 +205,7 @@ public class Apex {
 	{
 		fetch=true;
 		inFetch = (Instruction) memory.get(PC_value);
-		pipelineValues.add(0, inFetch);
+		//pipelineValues.add(1, inFetch);
 		PC_value++;
 	}
 	
