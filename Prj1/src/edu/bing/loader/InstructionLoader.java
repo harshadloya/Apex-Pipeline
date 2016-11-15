@@ -20,12 +20,13 @@ public class InstructionLoader
 		this.filename = filename;
 	}
 
-	public List<Instruction> loadInstructions()
+	public List<Instruction> loadInstructions() throws IOException
 	{
 		List<Instruction> instructionList = new ArrayList<Instruction>();
+		BufferedReader br = null;
 		try {
 			File file = new File(filename);
-			BufferedReader br = new BufferedReader(new FileReader(file));
+			 br = new BufferedReader(new FileReader(file));
 			String line = null;
 			String tempSplitIns[] = null;
 
@@ -75,7 +76,7 @@ public class InstructionLoader
 				}
 				instructionList.add(instruction);
 				System.out.println(line);
-				br.close();
+				
 			}
 		}
 		catch (FileNotFoundException e) {
@@ -86,6 +87,8 @@ public class InstructionLoader
 			System.err.println("Encountered error while reading an input file");
 			e.printStackTrace();
 			System.exit(0);
+		}finally {
+			br.close();
 		}
 		
 		return instructionList;

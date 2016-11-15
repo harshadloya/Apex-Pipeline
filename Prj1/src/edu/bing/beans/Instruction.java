@@ -9,6 +9,28 @@ public class Instruction {
 	private String dest;
 	private int literal;
 	
+	private int src1_value;
+	private int src2_value;
+	private int src3_value;
+	
+	public int getSrc3_value() {
+		return src3_value;
+	}
+	public void setSrc3_value(int src3_value) {
+		this.src3_value = src3_value;
+	}
+	public int getSrc1_value() {
+		return src1_value;
+	}
+	public void setSrc1_value(int src1_value) {
+		this.src1_value = src1_value;
+	}
+	public int getSrc2_value() {
+		return src2_value;
+	}
+	public void setSrc2_value(int src2_value) {
+		this.src2_value = src2_value;
+	}
 	public String getInstr_type() {
 		return instr_type;
 	}
