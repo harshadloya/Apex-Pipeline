@@ -26,7 +26,7 @@ public class InstructionLoader
 		BufferedReader br = null;
 		try {
 			File file = new File(filename);
-			 br = new BufferedReader(new FileReader(file));
+			br = new BufferedReader(new FileReader(file));
 			String line = null;
 			String tempSplitIns[] = null;
 
@@ -75,8 +75,8 @@ public class InstructionLoader
 					}
 				}
 				instructionList.add(instruction);
-				System.out.println(line);
-				
+				//System.out.println(line);
+
 			}
 		}
 		catch (FileNotFoundException e) {
@@ -90,7 +90,7 @@ public class InstructionLoader
 		}finally {
 			br.close();
 		}
-		
+
 		return instructionList;
 	}
 

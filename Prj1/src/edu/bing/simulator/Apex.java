@@ -15,17 +15,17 @@ public class Apex {
 	boolean initialized = false; 
 	private static int MEM_LENGTH = 10000;
 	int PC_value = 4000;
-	int result_inEx1ALU2;
+	int result_inEx1ALU2, result_inEx2ALU2;
 	int result_inMem;
 	HashMap<Integer, Object> memory = new HashMap <Integer, Object> ();
 
 	Scanner sc = new Scanner(System.in);
 	static ArrayList<Instruction> instructionsToProcess = new ArrayList<Instruction>();
-	boolean mem, ex, decode, fetch, halt;
+	boolean mem, ex1a1, ex1a2, ex2a1, ex2a2, decode, fetch, halt;
 	Instruction inFetch, inDecode, inEx1ALU1, inEx1ALU2, inEx2ALU1, inEx2ALU2, inMem, inWb;
 	//Commenting as we may not need it
 	//List<Instruction> pipelineValues = new ArrayList<Instruction>();
-	
+
 	HashMap<String, Register> registerStatus = new HashMap<String, Register>();
 
 
@@ -60,7 +60,7 @@ public class Apex {
 		for (int i = 0; i < MEM_LENGTH; i++){
 			memory.put(i, null);
 		}
-		
+
 		for (int n=0; n<16; n++)
 		{
 			Register r = new Register();
@@ -75,7 +75,7 @@ public class Apex {
 	void simulate() throws IOException
 	{
 		if(!initialized){
-			System.out.println("Please initialize the simulator.");
+			System.out.println("Please initialize the simulator");
 		}
 		else
 		{
@@ -87,12 +87,16 @@ public class Apex {
 				memory.put(i, instructionsToProcess.get(j));
 				i+=4;				
 			}
-			
-//			System.out.println("Enter the Number of Cycles for Simulation");
-//			int numberOfCycles = sc.nextInt();
-			for(int n=0; n<instructionsToProcess.size()+2; n++)//changed to instructionsToProcess for debug
+
+			System.out.println("Enter the Number of Cycles for Simulation");
+			//int numberOfCycles = sc.nextInt();			//Actual Code Line
+			int numberOfCycles = instructionsToProcess.size()+2;				//Temp Code Line
+			for(int n=0; n<numberOfCycles; n++)
 			{
-				wbStage(n);	
+				if(!halt)
+				{
+					wbStage(n);	
+				}
 			}
 		}
 	}
@@ -108,8 +112,6 @@ public class Apex {
 			registerStatus.get(inWb.getDest()).setReg_value(result_inMem);
 			System.out.println(registerStatus.get(inWb.getDest()));
 			memStage(n);
-			if(halt)
-				System.exit(0);
 		}
 		else
 		{
@@ -119,68 +121,58 @@ public class Apex {
 
 	void memStage(int n)
 	{
-		if(ex)
+		if(ex1a2)
 		{
 			mem = true;
-			ex = false;
+			ex1a2 = false;
 			inMem = inEx1ALU1;
 			result_inMem = result_inEx1ALU2;
 			//pipelineValues.add(4, inMem);
-			exStage(n);
+			exStage1ALU2(n);
+		}
+		else if(ex2a2)
+		{
+			mem = true;
+			ex2a2 = false;
+			inMem = inEx1ALU1;
+			result_inMem = result_inEx2ALU2;
+			//pipelineValues.add(4, inMem);
+			exStage2ALU2(n);
 		}
 		else
 		{
-			exStage(n);
-		}
-
-	}
-
-	void exStage(int n)
-	{
-		if(decode)
-		{
-			ex = true;
-			decode=false;
-			switch(inDecode.getInstr_type())
+			/*if(inDecode.getInstr_type()!=null)
 			{
+				switch(inDecode.getInstr_type())
+				{
+				case "BZ":
+				case "BNZ":
+				case "BAL":
+					exStage2ALU2(n);
+					break;
 				case "ADD":
 				case "SUB":
 				case "MUL":
 				case "MOVC":
-					exStage1ALU1(n);
+					exStage1ALU2(n);
 					break;
-				case "BAL":
-				case "BNZ":
-				case "BZ" :
-					exStage2ALU1(n);
-					break;
-				case "HALT" :
-					//set some boolean true to kill the main loop
-					break;
-			
+				}
 			}
-			decodeStage(n);
+			else*/ 
+			//keeping the above code if the below call needs to be based on instruction type
+			//taking FU1 as it does not matter if decode stage is not hvaing any instruction
+				exStage1ALU2(n);
 		}
-		else
-		{
-			decodeStage(n);
-		}
-
 	}
-	
-	void exStage1ALU1(int n)
-	{
-			decode=false;
-			inEx1ALU1 = inDecode;
-			//pipelineValues.add(2, inEx1ALU1);
-			exStage1ALU2(n);
 
-	}
-	
 	void exStage1ALU2(int n)
 	{
-		inEx1ALU2 = inEx1ALU1;
-		switch (inEx1ALU2.getInstr_type()){
+		if(ex1a1)
+		{
+			ex1a2 = true;
+			ex1a1=false;
+			inEx1ALU2 = inEx1ALU1;
+			switch (inEx1ALU2.getInstr_type()){
 			case "ADD":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + inEx1ALU2.getSrc2_value();
 				break;
@@ -193,23 +185,58 @@ public class Apex {
 			case "MOVC":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value();
 				break;
-				
+
+			}
 		}
-		//decodeStage(n);
-	
+		else
+			exStage1ALU1(n);
+
 	}
-	
-	void exStage2ALU1(int n)
+
+	void exStage1ALU1(int n)
 	{
-		inEx2ALU1 = inDecode;
-		//pipelineValues.add(3, inEx2ALU1);
-		exStage2ALU2(n);
+		if(decode)
+		{
+			ex1a1 = true;
+			decode = false;
+			inEx1ALU1 = inDecode;
+			//pipelineValues.add(2, inEx1ALU1);
+			decodeStage(n);
+		}
+		else
+		{
+			decodeStage(n);
+		}
 	}
-	
+
 	void exStage2ALU2(int n)
 	{
-		inEx2ALU2 = inEx2ALU1;
+		if(ex2a1)
+		{
+			ex2a2 = true;
+			ex2a1=false;
+			inEx2ALU2 = inEx2ALU1;
+			exStage2ALU1(n);
+		}
+		else
+		{
+			exStage2ALU1(n);
+		}
 
+	}
+
+	void exStage2ALU1(int n)
+	{
+		if(decode)
+		{
+			ex2a1 = true;
+			decode = false;
+			inEx2ALU1 = inDecode;
+			//pipelineValues.add(3, inEx2ALU1);
+			decodeStage(n);
+		}
+		else
+			decodeStage(n);
 	}
 
 	void decodeStage(int n)
@@ -220,32 +247,31 @@ public class Apex {
 			decode = true;
 			inDecode = inFetch;
 			//pipelineValues.add(1, inDecode);
-			
-			//will have to do something like below for each instruction type... need to confirm with nimesh
-//			registerStatus.get(inDecode.getSrc1()).setReg_name(inDecode.getSrc1());
-//			registerStatus.get(inDecode.getSrc1()).setReg_value(registerStatus.get(inDecode.getSrc1()).getReg_value());
-//			registerStatus.get(inDecode.getSrc1()).setStatus(1);
-//			fetchStage(n);
+
+			//will have to do something like below for each instruction type...
+			//			registerStatus.get(inDecode.getSrc1()).setReg_name(inDecode.getSrc1());
+			//			registerStatus.get(inDecode.getSrc1()).setReg_value(registerStatus.get(inDecode.getSrc1()).getReg_value());
+			//			registerStatus.get(inDecode.getSrc1()).setStatus(1);
+			//			fetchStage(n);
+			int source1, source2, source3, literal;
 			switch(inDecode.getInstr_type())
 			{
 			case "ADD":
 			case "SUB":
 			case "MUL":
 			case "LOAD":
-				int source1, source2, source3, dest, literal;
-				
 				source1 = registerStatus.get(inDecode.getSrc1()).getReg_value();
 				inDecode.setSrc1_value(source1);
-				
+
 				if (inDecode.getSrc2()!=null){
-				source2 = registerStatus.get(inDecode.getSrc2()).getReg_value();
-				inDecode.setSrc2_value(source2);
+					source2 = registerStatus.get(inDecode.getSrc2()).getReg_value();
+					inDecode.setSrc2_value(source2);
 				}
 				else {
-				literal = inDecode.getLiteral();
-				inDecode.setSrc1_value(source1);
+					literal = inDecode.getLiteral();
+					inDecode.setSrc2_value(literal);
 				}
-				dest = registerStatus.get(inDecode.getDest()).getReg_value();
+				//dest = registerStatus.get(inDecode.getDest()).getReg_value();
 				break;
 			case "BAL":
 			case "BNZ":
@@ -261,23 +287,18 @@ public class Apex {
 				if (inDecode.getSrc2()!=null){
 					source2 = registerStatus.get(inDecode.getSrc2()).getReg_value();
 					inDecode.setSrc2_value(source2);
-					}
-					else {
-					literal = registerStatus.get(inDecode.getLiteral()).getReg_value();
-				inDecode.setSrc2_value(literal);
+				}
+				else {
+					literal = inDecode.getLiteral();
+					inDecode.setSrc2_value(literal);
 				}
 				break;
 			case "MOVC":
 				source1 = inDecode.getLiteral();
 				inDecode.setSrc1_value(source1);
 				break;
-			case "HALT" :
-				halt = true;
-				fetch = false;
-				//set some boolean true to kill the main loop
-				break;
-		
-		}
+
+			}
 			fetchStage(n);
 		}
 		else
@@ -288,15 +309,12 @@ public class Apex {
 
 	void fetchStage(int n)
 	{
-		if(!fetch)
-			wbStage(n);
-			
 		fetch=true;
 		inFetch = (Instruction) memory.get(PC_value);
 		//pipelineValues.add(1, inFetch);
 		PC_value=PC_value+4;
 	}
-	
+
 
 	void display()
 	{
@@ -305,7 +323,7 @@ public class Apex {
 
 	public static void main(String[] args) throws IOException
 	{
-		System.out.println("Starting program..");
+		System.out.println("Starting simulator...");
 		Apex ap = new Apex();
 		ap.operations();
 	}
