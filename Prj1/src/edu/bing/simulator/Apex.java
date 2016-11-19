@@ -16,7 +16,7 @@ public class Apex {
 	private static int MEM_LENGTH = 10000;
 	int PC_value = 4000;
 	int result_inEx1ALU2, result_inEx1ALU1, result_inEx2ALU2, result_inEx2ALU1, result_inWb;
-	int result_inMem;
+	Integer result_inMem;
 	int literal_zero = 0000; 
 	int offset = 0;
 	HashMap<Integer, Object> memory = new HashMap <Integer, Object> ();
@@ -61,7 +61,7 @@ public class Apex {
 		initialized = true;
 		System.out.println("Initialized...");
 		for (int i = 0; i < MEM_LENGTH; i++){
-			memory.put(i, null);
+			memory.put(i, new Integer(0));
 		}
 
 		for (int n=0; n<16; n++)
@@ -92,7 +92,7 @@ public class Apex {
 				i+=4;				
 			}
 
-//			System.out.println("Enter the Number of Cycles for Simulation"); // commenting as confusing 
+			//			System.out.println("Enter the Number of Cycles for Simulation"); // commenting as confusing 
 			//int numberOfCycles = sc.nextInt();			//Actual Code Line
 			int numberOfCycles = instructionsToProcess.size()+10;				//Temp Code Line +10 is just a random number
 			for(int n=0; n<numberOfCycles; n++)
@@ -115,8 +115,11 @@ public class Apex {
 			inWb = inMem;
 			result_inWb = result_inMem;
 			//pipelineValues.add(5, inWb);
-			registerFile.get(inWb.getDest()).setReg_value(result_inMem);
-			registerFile.get(inWb.getDest()).setStatus(0);		//just added this line, nothing to do with it
+			if(!(inWb.getInstr_type().equalsIgnoreCase("STORE")))
+			{
+				registerFile.get(inWb.getDest()).setReg_value(result_inWb);
+				registerFile.get(inWb.getDest()).setStatus(0);		//just added this line, nothing to do with it
+			}				
 			System.out.println(registerFile.get(inWb.getDest()));
 			wb=false;
 			memStage(n);
@@ -124,9 +127,9 @@ public class Apex {
 		else
 		{
 			memStage(n);
-			}
+		}
 	}
-	
+
 
 	void memStage(int n)
 	{
@@ -136,58 +139,89 @@ public class Apex {
 			mem = true;
 			ex1a2 = false;
 			inMem = inEx1ALU2;
-			result_inMem = result_inEx1ALU2;
+			if(!(inMem.getInstr_type().equalsIgnoreCase("LOAD") || inMem.getInstr_type().equalsIgnoreCase("STORE")))
+			{
+				result_inMem = result_inEx1ALU2;
+			}
+			else
+				{
+					result_inMem = (Integer) memory.get(result_inEx1ALU2);
+					if(inMem.getInstr_type().equalsIgnoreCase("STORE"))
+					{
+						memory.put(result_inMem, inMem.getSrc3_value());
+						//mem=false;
+					}
+				}
 			//pipelineValues.add(4, inMem);
 			exStage(n);
 		}
 		else
 		{
 			mem = false;
-				exStage(n);
+			exStage(n);
 		}
 	}
 
 	void exStage(int n){//this will ensure that both EX stages are called in one cycle
-						//either this or we can also put them together in single function
-		
+		//either this or we can also put them together in single function
+
 		exStage1ALU2(n);
 		exStage1ALU1(n);
-		
-		exStage2ALU2(n);
-		exStage2ALU1(n);
-		
+
+		ex_branchDelayStage(n);
+		ex_branchStage(n);
+
 		decodeStage(n);
 	}
-	
+
 	void exStage1ALU2(int n)
 	{
 		if(ex1a1)
-		{//LOAD and STORE are added in decode, need to write in EX
+		{
 			ex1a2 = true;
 			ex1a1=false;
 			set_exStage1 = false;
 			inEx1ALU2 = inEx1ALU1;
-			switch (inEx1ALU2.getInstr_type()){
+			switch (inEx1ALU2.getInstr_type())
+			{
+
 			case "ADD":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + inEx1ALU2.getSrc2_value();
-
 				break;
+
 			case "SUB":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() - inEx1ALU2.getSrc2_value();
-
 				break;
+
 			case "MUL":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() * inEx1ALU2.getSrc2_value();
-
 				break;
+
+			case "AND":
+				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() & inEx1ALU2.getSrc2_value();
+				break;
+
+			case "OR":
+				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() | inEx1ALU2.getSrc2_value();
+				break;
+
+			case "EX-OR":
+				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() ^ inEx1ALU2.getSrc2_value();
+				break;
+
 			case "MOVC":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + literal_zero;
 				break;
-				
+
+			case "LOAD":
+			case "STORE":
+				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + inEx1ALU2.getLiteral();
+				break;
+
 			case "HALT":
 				ex1a2= false;
 				break;
-				
+
 			}
 		}
 		else {
@@ -210,7 +244,7 @@ public class Apex {
 		}
 	}
 
-	void exStage2ALU2(int n)
+	void ex_branchDelayStage(int n)
 	{
 		if(ex2a1)
 		{
@@ -229,9 +263,9 @@ public class Apex {
 
 	}
 
-	void exStage2ALU1(int n)
+	void ex_branchStage(int n)
 	{
-		
+
 		if(decode && branch_instr)
 		{
 			ex2a1 = true;
@@ -252,21 +286,21 @@ public class Apex {
 				System.out.println("PC value updated: "+PC_value);
 				branch=true;
 				break;
-				
-		case "BNZ":
-			if(result_inEx1ALU2!=0){ // assuming forwarding 
-				PC_value = PC_value - 8 + inEx2ALU1.getLiteral();//updated PC value, please cross check destination address calculation
-				System.out.println("PC value updated: "+PC_value);
-				branch = true;
-				break;
-			}
+
+			case "BNZ":
+				if(result_inEx1ALU2!=0){ // assuming forwarding 
+					PC_value = PC_value - 8 + inEx2ALU1.getLiteral();//updated PC value, please cross check destination address calculation
+					System.out.println("PC value updated: "+PC_value);
+					branch = true;
+					break;
+				}
 			}
 		}
 		else
 			ex2a1 = false;
-		}
+	}
 
-	
+
 
 	void decodeStage(int n)
 	{
@@ -278,117 +312,119 @@ public class Apex {
 		}
 		else
 			if(fetch)
-		{
-			decode = true;
-			int source1,source2,source3,literal;
-			Instruction previousInstruction = null;
-			previousInstruction = inDecode;
-			inDecode = inFetch;
-			if(checkDependency(inDecode, previousInstruction)){//just added this line, nothing to do with it
-				isDependent = true;
-				stall_decode = true;
-			}
-			switch(inDecode.getInstr_type()){
-			case "ADD":
-			case "SUB":
-			case "MUL":
-			case "DIV":
-			case "LOAD":
-				if(registerFile.get(inDecode.getSrc1()).getStatus()==1){//dependency scenario yet to be finalized
-					System.out.println("Destination register busy.");
-					stall_fetch = true;
+			{
+				decode = true;
+				int source1,source2,source3,literal;
+				Instruction previousInstruction = null;
+				previousInstruction = inDecode;
+				inDecode = inFetch;
+				if(checkDependency(inDecode, previousInstruction)){//just added this line, nothing to do with it
+					isDependent = true;
 					stall_decode = true;
-					break;
 				}
-				else if(inDecode.getSrc2()!=null){
-					if(registerFile.get(inDecode.getSrc2()).getStatus()==1){
+				switch(inDecode.getInstr_type()){
+				case "ADD":
+				case "SUB":
+				case "MUL":
+				case "AND":
+				case "OR":
+				case "EX-OR":
+				case "LOAD":
+					if(registerFile.get(inDecode.getSrc1()).getStatus()==1){//dependency scenario yet to be finalized
 						System.out.println("Destination register busy.");
 						stall_fetch = true;
 						stall_decode = true;
 						break;
 					}
-				}
-				else{
-				source1 = registerFile.get(inDecode.getSrc1()).getReg_value();
-				inDecode.setSrc1_value(source1);
-				if (inDecode.getSrc2()!=null){
-					source2 = registerFile.get(inDecode.getSrc2()).getReg_value();
-					inDecode.setSrc2_value(source2);
-				}
-				else {
+					else if(inDecode.getSrc2()!=null){
+						if(registerFile.get(inDecode.getSrc2()).getStatus()==1){
+							System.out.println("Destination register busy.");
+							stall_fetch = true;
+							stall_decode = true;
+							break;
+						}
+					}
+					else{
+						source1 = registerFile.get(inDecode.getSrc1()).getReg_value();
+						inDecode.setSrc1_value(source1);
+						if (inDecode.getSrc2()!=null){
+							source2 = registerFile.get(inDecode.getSrc2()).getReg_value();
+							inDecode.setSrc2_value(source2);
+						}
+						else {
+							literal = inDecode.getLiteral();
+							inDecode.setSrc2_value(literal);
+						}
+						branch_instr = false;
+						set_exStage1 = true;
+						registerFile.get(inDecode.getDest()).setStatus(1);
+					}
+					break;
+				case "BZ":
+				case "BNZ":
+				case "JUMP":
+				case "BAL":
 					literal = inDecode.getLiteral();
-					inDecode.setSrc2_value(literal);
-				}
-				branch_instr = false;
-				set_exStage1 = true;
-				registerFile.get(inDecode.getDest()).setStatus(1);
-				break;
-				}
-			case "BZ":
-			case "BNZ":
-			case "JUMP":
-			case "BAL":
-				literal = inDecode.getLiteral();
-				inDecode.setSrc1_value(literal);
-				set_exStage2 = true;
-				branch_instr = true;				
-				break;
-			case "MOVC":
-				if(registerFile.get(inDecode.getDest()).getStatus()==1){
-					System.out.println("Destination register busy in MOVC.");
-					stall_fetch = true;
-					stall_decode = true;
-//					decode=false;
+					inDecode.setSrc1_value(literal);
+					set_exStage2 = true;
+					branch_instr = true;				
+					break;
+				case "MOVC":
+					if(registerFile.get(inDecode.getDest()).getStatus()==1){
+						System.out.println("Destination register busy in MOVC.");
+						stall_fetch = true;
+						stall_decode = true;
+						//					decode=false;
+						break;
+					}
+					else{
+						source1 = inDecode.getLiteral();
+						inDecode.setSrc1_value(source1);
+						set_exStage1 = true;
+						branch_instr = false;
+						registerFile.get(inDecode.getDest()).setStatus(1);
+						break;
+					}
+				case "STORE":
+
+					source1 = registerFile.get(inDecode.getSrc1()).getReg_value();
+					inDecode.setSrc1_value(source1);
+					source3 = registerFile.get(inDecode.getSrc3()).getReg_value();
+					inDecode.setSrc3_value(source3);
+					if (inDecode.getSrc2()!=null){
+						source2 = registerFile.get(inDecode.getSrc2()).getReg_value();
+						inDecode.setSrc2_value(source2);
+					}
+					else {
+						literal = inDecode.getLiteral();
+						inDecode.setSrc2_value(literal);
+					}
+					set_exStage1 = true;
+					branch_instr = false;
+					break;
+
+				case "HALT":
+					halt=true;
 					break;
 				}
-				else{
-				source1 = inDecode.getLiteral();
-				inDecode.setSrc1_value(source1);
-				set_exStage1 = true;
-				branch_instr = false;
-				registerFile.get(inDecode.getDest()).setStatus(1);
-				break;
-				}
-			case "STORE":
-				
-				source1 = registerFile.get(inDecode.getSrc1()).getReg_value();
-				inDecode.setSrc1_value(source1);
-				source3 = registerFile.get(inDecode.getSrc3()).getReg_value();
-				inDecode.setSrc3_value(source3);
-				if (inDecode.getSrc2()!=null){
-					source2 = registerFile.get(inDecode.getSrc2()).getReg_value();
-					inDecode.setSrc2_value(source2);
-				}
-				else {
-					literal = inDecode.getLiteral();
-					inDecode.setSrc2_value(literal);
-				}
-				set_exStage1 = true;
-				branch_instr = false;
-				break;
-				
-			case "HALT":
-				halt=true;
-				break;
+				fetchStage(n);
 			}
-			fetchStage(n);
-		}
 			else{
 				fetchStage(n);
 			}
-		
-}
-	
+
+	}
+
 	boolean checkDependency(Instruction current, Instruction previous){
 		if(current == null || previous == null)
 			return false;
 		else{
-		if(previous.getDest() == current.getSrc1()||previous.getDest()==current.getSrc2()||previous.getDest()==current.getSrc3())
-			return true;
-		else
-			return false;
-			}
+			if(previous.getDest() == current.getSrc1()||previous.getDest()==current.getSrc2()||previous.getDest()==current.getSrc3())
+				return true;
+			else
+				return false;
 		}
+	}
 
 	void fetchStage(int n)
 	{	
@@ -400,7 +436,7 @@ public class Apex {
 			if(stall_decode)
 				stall_decode = false;
 			fetch = false;
-			
+
 		}
 		else{
 			jump_flag = false;
