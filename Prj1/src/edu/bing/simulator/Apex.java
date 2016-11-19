@@ -26,7 +26,7 @@ public class Apex {
 	boolean wb, mem, ex1a1, ex1a2, ex2a1, ex2a2, decode, fetch, branch, halt, set_exStage2, set_exStage1, jump_flag, branch_instr, src1IsDependent, src2IsDependent, src3IsDependent;
 	boolean stall_fetch, stall_decode, stall_exstage, stall_mem, stall_wb;
 	Instruction inFetch, inDecode, inEx1ALU1, inEx1ALU2, inEx2ALU1, inEx2ALU2, inMem, inWb;
-	
+
 	HashMap<String, Register> registerFile = new HashMap<String, Register>();
 	HashMap<String, Register> shadowRegisterFile = new HashMap<String, Register>();
 	int count=0;
@@ -103,7 +103,7 @@ public class Apex {
 					wbStage(n);
 					count++;
 				}
-				
+
 			}
 			System.out.println(count);
 		}
@@ -130,7 +130,7 @@ public class Apex {
 				halt = true;
 			}
 			memStage(n);
-			
+
 		}
 		else
 		{
@@ -158,7 +158,7 @@ public class Apex {
 				{
 					shadowRegisterFile.get(inMem.getDest()).setReg_value(result_inMem);
 				}
-				
+
 				if(inMem.getInstr_type().equalsIgnoreCase("STORE"))
 				{
 					memory.put(result_inMem, inMem.getSrc3_value());
@@ -239,7 +239,7 @@ public class Apex {
 				ex1a2= false;
 				break;
 			}
-			
+
 		}
 		else {
 			ex1a2 = false;
@@ -265,7 +265,7 @@ public class Apex {
 			src3IsDependent = false;
 		}	
 	}
-	
+
 	void checkDependency(Instruction current, Instruction previous){
 		if(current != null && previous != null)
 		{
@@ -304,7 +304,7 @@ public class Apex {
 				branch=false;
 				jump_flag = true;
 				ex2a2=ex2a1=ex1a1=ex1a2=false;//flush instructions in EX stages
-//				halt = false;
+				//				halt = false;
 			}
 		}
 		else
@@ -344,6 +344,11 @@ public class Apex {
 					branch = true;
 					break;
 				}
+			case "BAL":
+				registerFile.get("X").setReg_value(PC_value-4);
+				PC_value = registerFile.get("X").getReg_value() + inEx2ALU1.getLiteral();
+				branch = true;
+				break;
 			}
 		}
 		else
@@ -369,7 +374,7 @@ public class Apex {
 				previousInstruction = inDecode;
 				inDecode = inFetch;
 				checkDependency(inDecode, previousInstruction);
-				
+
 				switch(inDecode.getInstr_type()){
 				case "ADD":
 				case "SUB":
