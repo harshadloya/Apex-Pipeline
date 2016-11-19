@@ -72,6 +72,6 @@ public class Instruction {
 	public String toString() {
 		return "Instruction : Instruction_type = " + instr_type + ", Source 1 = " + src1 + ", Source 2 = " + src2 + ", Source 3 = " + src3
 				+ ", Destination = " + dest + ", Literal = " + literal + ", Source1_value=" + src1_value + ", Source2_value = "
-				+ src2_value + ", Source3_value=" + src3_value;
+				+ src2_value + ", Source3_value=" + src3_value + "]";
 	}
 }
