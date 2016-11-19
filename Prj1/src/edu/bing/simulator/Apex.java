@@ -118,7 +118,6 @@ public class Apex {
 			mem=false;
 			inWb = inMem;
 			result_inWb = result_inMem;
-			//pipelineValues.add(5, inWb);
 			if(!(inWb.getInstr_type().equalsIgnoreCase("STORE")))
 			{
 				registerFile.get(inWb.getDest()).setReg_value(result_inWb);
@@ -155,12 +154,16 @@ public class Apex {
 			else
 			{
 				result_inMem = (Integer) memory.get(result_inEx1ALU2);
+				if(inMem.getInstr_type().equalsIgnoreCase("LOAD"))
+				{
+					shadowRegisterFile.get(inMem.getDest()).setReg_value(result_inMem);
+				}
+				
 				if(inMem.getInstr_type().equalsIgnoreCase("STORE"))
 				{
 					memory.put(result_inMem, inMem.getSrc3_value());
 				}
 			}
-			//pipelineValues.add(4, inMem);
 			exStage(n);
 		}
 		else
@@ -170,8 +173,8 @@ public class Apex {
 		}
 	}
 
-	void exStage(int n){//this will ensure that both EX stages are called in one cycle
-		//either this or we can also put them together in single function
+	//this will ensure that both EX stages are called in one cycle
+	void exStage(int n){
 
 		exStage1ALU2(n);
 		exStage1ALU1(n);
@@ -228,7 +231,6 @@ public class Apex {
 				break;
 
 			case "LOAD":
-				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
 			case "STORE":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + inEx1ALU2.getLiteral();
 				break;
