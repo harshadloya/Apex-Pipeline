@@ -99,6 +99,7 @@ public class Apex {
 			for(int n=0; n<numberOfCycles; n++)
 			{
 				if(!(fetch&&decode&&ex1a1&&ex1a2&&ex2a1&&ex2a2&&mem&&wb)) //iff all stages are empty
+					//if(!halt)
 				{
 					wbStage(n);
 					count++;
@@ -118,10 +119,10 @@ public class Apex {
 			mem=false;
 			inWb = inMem;
 			result_inWb = result_inMem;
-			if(!(inWb.getInstr_type().equalsIgnoreCase("STORE")))
+			if(!(inWb.getInstr_type().equalsIgnoreCase("STORE") || inWb.getInstr_type().equalsIgnoreCase("HALT") || inWb.getInstr_type().equalsIgnoreCase("BNZ") || inWb.getInstr_type().equalsIgnoreCase("BZ")))
 			{
 				registerFile.get(inWb.getDest()).setReg_value(result_inWb);
-				registerFile.get(inWb.getDest()).setStatus(0);		//just added this line, nothing to do with it
+				registerFile.get(inWb.getDest()).setStatus(0);
 			}				
 			System.out.println(registerFile.get(inWb.getDest()));
 			wb=false;
@@ -141,36 +142,47 @@ public class Apex {
 
 	void memStage(int n)
 	{
-
-		if(ex1a2)
+		if(ex1a2 || ex2a2)
 		{
-			mem = true;
-			ex1a2 = false;
-			inMem = inEx1ALU2;
-			if(!(inMem.getInstr_type().equalsIgnoreCase("LOAD") || inMem.getInstr_type().equalsIgnoreCase("STORE")))
+			if(ex1a2)
 			{
-				result_inMem = result_inEx1ALU2;
-			}
-			else
-			{
-				result_inMem = (Integer) memory.get(result_inEx1ALU2);
-				if(inMem.getInstr_type().equalsIgnoreCase("LOAD"))
+				mem = true;
+				ex1a2 = false;
+				inMem = inEx1ALU2;
+				if(!(inMem.getInstr_type().equalsIgnoreCase("LOAD") || inMem.getInstr_type().equalsIgnoreCase("STORE")))
 				{
-					shadowRegisterFile.get(inMem.getDest()).setReg_value(result_inMem);
+					result_inMem = result_inEx1ALU2;
+				}
+				else
+				{
+					result_inMem = (Integer) memory.get(result_inEx1ALU2);
+					if(inMem.getInstr_type().equalsIgnoreCase("LOAD"))
+					{
+						shadowRegisterFile.get(inMem.getDest()).setReg_value(result_inMem);
+					}
+
+					if(inMem.getInstr_type().equalsIgnoreCase("STORE"))
+					{
+						memory.put(result_inMem, inMem.getSrc3_value());
+					}
 				}
 
-				if(inMem.getInstr_type().equalsIgnoreCase("STORE"))
-				{
-					memory.put(result_inMem, inMem.getSrc3_value());
-				}
+			}
+			if(ex2a2)
+			{
+				mem = true;
+				ex2a2 = false;
+				inMem = inEx2ALU2;
 			}
 			exStage(n);
 		}
+
 		else
 		{
 			mem = false;
 			exStage(n);
 		}
+
 	}
 
 	//this will ensure that both EX stages are called in one cycle
@@ -198,45 +210,48 @@ public class Apex {
 			case "ADD":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + inEx1ALU2.getSrc2_value();
 				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
+				registerFile.get(inEx1ALU2.getDest()).setReg_value(0);
 				break;
 
 			case "SUB":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() - inEx1ALU2.getSrc2_value();
 				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
+				registerFile.get(inEx1ALU2.getDest()).setReg_value(0);
 				break;
 
 			case "MUL":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() * inEx1ALU2.getSrc2_value();
 				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
+				registerFile.get(inEx1ALU2.getDest()).setReg_value(0);
 				break;
 
 			case "AND":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() & inEx1ALU2.getSrc2_value();
 				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
+				registerFile.get(inEx1ALU2.getDest()).setReg_value(0);
 				break;
 
 			case "OR":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() | inEx1ALU2.getSrc2_value();
 				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
+				registerFile.get(inEx1ALU2.getDest()).setReg_value(0);
 				break;
 
 			case "EX-OR":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() ^ inEx1ALU2.getSrc2_value();
 				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
+				registerFile.get(inEx1ALU2.getDest()).setReg_value(0);
 				break;
 
 			case "MOVC":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + literal_zero;
 				shadowRegisterFile.get(inEx1ALU2.getDest()).setReg_value(result_inEx1ALU2);
+				registerFile.get(inEx1ALU2.getDest()).setReg_value(0);
 				break;
 
 			case "LOAD":
 			case "STORE":
 				result_inEx1ALU2 = inEx1ALU2.getSrc1_value() + inEx1ALU2.getLiteral();
-				break;
-
-			case "HALT":
-				ex1a2= false;
 				break;
 			}
 
@@ -297,13 +312,14 @@ public class Apex {
 	{
 		if(ex2a1)
 		{
+			ex2a2=true;
 			ex2a1=false;
 			set_exStage2 = false;
 			inEx2ALU2 = inEx2ALU1;
 			if(branch){
 				branch=false;
 				jump_flag = true;
-				ex2a2=ex2a1=ex1a1=ex1a2=false;//flush instructions in EX stages
+				//ex2a2=ex2a1=ex1a1=ex1a2=false;//flush instructions in EX stages
 				//				halt = false;
 			}
 		}
@@ -322,14 +338,22 @@ public class Apex {
 			decode = false;
 			inEx2ALU1 = inDecode;
 			branch_instr = false;
-			switch(inEx2ALU1.getInstr_type()){
+
+			switch(inEx2ALU1.getInstr_type())
+			{
+			case "HALT":
+				//halt=true;
+				break;
+
 			case "BZ":
-				if(result_inEx1ALU2==0){ // assuming forwarding 
+				if(result_inEx1ALU2==0)
+				{ // assuming forwarding 
 					PC_value = PC_value - 8 + inEx2ALU1.getLiteral();//updated PC value
 					System.out.println("PC value updated: "+PC_value);
-					branch = true;
-					break;
+					branch = true;	
 				}
+				break;
+
 			case "JUMP":
 				System.out.println("PC value before: "+PC_value);
 				PC_value = PC_value - 8 + inEx2ALU1.getLiteral();
@@ -341,9 +365,10 @@ public class Apex {
 				if(result_inEx1ALU2!=0){ // assuming forwarding 
 					PC_value = PC_value - 8 + inEx2ALU1.getLiteral();//updated PC value, please cross check destination address calculation
 					System.out.println("PC value updated: "+PC_value);
-					branch = true;
-					break;
+					branch = true;		
 				}
+				break;
+
 			case "BAL":
 				registerFile.get("X").setReg_value(PC_value-4);
 				PC_value = registerFile.get("X").getReg_value() + inEx2ALU1.getLiteral();
@@ -383,7 +408,7 @@ public class Apex {
 				case "OR":
 				case "EX-OR":
 				case "LOAD":
-					/*if(registerFile.get(inDecode.getSrc1()).getStatus()==1){//dependency scenario yet to be finalized
+					if(registerFile.get(inDecode.getSrc1()).getStatus()==1){//dependency scenario yet to be finalized
 						System.out.println("Destination register busy.");
 						stall_fetch = true;
 						stall_decode = true;
@@ -395,7 +420,7 @@ public class Apex {
 						stall_decode = true;
 						break;
 					}
-					else*/{
+					else{
 						source1 = registerFile.get(inDecode.getSrc1()).getReg_value();
 						inDecode.setSrc1_value(source1);
 						if (inDecode.getSrc2()!=null){
@@ -411,8 +436,11 @@ public class Apex {
 						registerFile.get(inDecode.getDest()).setStatus(1);
 					}
 					break;
+
 				case "BZ":
 				case "BNZ":
+					stall_decode=true;
+				case "HALT":	
 				case "JUMP":
 				case "BAL":
 					literal = inDecode.getLiteral();
@@ -421,15 +449,16 @@ public class Apex {
 					set_exStage2 = true;
 					branch_instr = true;				
 					break;
+
 				case "MOVC":
-					/*if(registerFile.get(inDecode.getDest()).getStatus()==1){
+					if(registerFile.get(inDecode.getDest()).getStatus()==1){
 						System.out.println("Destination register busy in MOVC.");
 						stall_fetch = true;
 						stall_decode = true;
 						//					decode=false;
 						break;
 					}
-					else*/{
+					else{
 						source1 = inDecode.getLiteral();
 						inDecode.setSrc1_value(source1);
 						set_exStage1 = true;
@@ -437,8 +466,8 @@ public class Apex {
 						registerFile.get(inDecode.getDest()).setStatus(1);
 						break;
 					}
-				case "STORE":
 
+				case "STORE":
 					source1 = registerFile.get(inDecode.getSrc1()).getReg_value();
 					inDecode.setSrc1_value(source1);
 					source3 = registerFile.get(inDecode.getSrc3()).getReg_value();
@@ -456,10 +485,7 @@ public class Apex {
 					inDecode.setDest("");
 					break;
 
-				case "HALT":
-					//halt=true;
-					inDecode.setDest("");
-					break;
+
 				}
 				fetchStage(n);
 			}
@@ -479,7 +505,8 @@ public class Apex {
 				jump_flag = false;
 			if(stall_decode)
 				stall_decode = false;
-			fetch = decode = ex1a1 = ex1a2 = ex2a1 = ex2a2 = mem = wb = true;
+			if(halt)
+				fetch = decode = ex1a1 = ex1a2 = ex2a1 = ex2a2 = mem = wb = true;
 		}
 		else{
 			jump_flag = false;
