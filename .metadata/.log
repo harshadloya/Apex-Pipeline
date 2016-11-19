@@ -1756,3 +1756,8 @@ This warning can be switched off on the Team > Git > Confirmations and Warnings 
 
 !ENTRY org.eclipse.jdt.core 4 0 2016-11-11 22:10:06.133
 !MESSAGE Invalid ZIP archive: src/Instructions.txt [in Prj1]
+
+!ENTRY org.eclipse.m2e.logback.appender 4 0 2016-11-19 08:03:49.563
+!MESSAGE bash.exe: warning: could not find /tmp, please create!
+bash: which: command not found
+

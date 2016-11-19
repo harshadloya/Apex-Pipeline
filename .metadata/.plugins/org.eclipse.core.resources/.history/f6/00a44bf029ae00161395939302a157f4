@@ -1,0 +1,6 @@
+MOVC R0, #0
+MOVC R1, #10
+MOVC R2, #10
+SUB R2, R1
+BZ #-8
+HALT

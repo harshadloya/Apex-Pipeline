@@ -71,8 +71,7 @@ public class Instruction {
 	@Override
 	public String toString() {
 		return "Instruction [instr_type=" + instr_type + ", src1=" + src1 + ", src2=" + src2 + ", src3=" + src3
-				+ ", dest=" + dest + ", literal=" + literal + "]";
+				+ ", dest=" + dest + ", literal=" + literal + ", src1_value=" + src1_value + ", src2_value="
+				+ src2_value + ", src3_value=" + src3_value + "]";
 	}
-	
-	
 }

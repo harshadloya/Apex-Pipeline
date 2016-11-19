@@ -46,7 +46,12 @@ public class InstructionLoader
 
 				case 3:
 					instruction.setInstr_type(tempSplitIns[0]);
-					instruction.setDest(tempSplitIns[1]);
+					if(tempSplitIns[0].equalsIgnoreCase("BAL"))
+					{
+						instruction.setSrc1(tempSplitIns[1]);
+					}
+					else
+						instruction.setDest(tempSplitIns[1]);
 					instruction.setLiteral(Integer.parseInt(tempSplitIns[2]));
 					break;
 
