@@ -1,8 +1,0 @@
-
-The tar file contains the following files and folder-
-
-Makefile  README.txt  build  build.xml  doc  src  target        
-
-To run the program the following command will need to be used from the directory where the tar is extracted.
-
-java -cp target/Apexsimulator.jar apexsimulator.ApexSimulator <test input file path>
